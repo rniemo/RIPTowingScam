@@ -12,20 +12,26 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
     <title>Parking Pal</title>
   </head>
+
   <body>
     <div class="container">
+      <div class="row">
         <h1>Parking Pal</h1>
-        <div id="map"></div>
+        <img id="logo" src="lil car.png" style="width:50px; height:auto">
+      </div>
+      <div id="map"></div>
+      <div id="buttons" class="row">
+        <button id="noTow" type="button" class="btn btn-success btn-circle btn-xl"><i class="glyphicon glyphicon-heart"></i></button>
+        <button id="gotTowed" type="button" class="btn btn-danger btn-circle btn-xl"><i class="glyphicon glyphicon-remove"></i></button>
+      </div>
     </div>
 
     <div id="myModal" class="modal fade" role="dialog">
       <div class="modal-dialog">
-
-        <!-- Modal content-->
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">Welcome to Parking Pal!</h4>
+            <h3 class="modal-title">Welcome to Parking Pal!</h3>
           </div>
           <div class="modal-body">
             <p>Where are you?</p><br>
@@ -44,11 +50,10 @@
 
     <script>
     $(document).ready(function () {
-
-    $('#myModal').modal('show');
-
+      $('#myModal').modal('show');
     });
     </script>
+    
     <script async defer
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA37mA3uweNrUGD159vlW06IZh7EZHOEaA&callback=initMap">
     </script>
