@@ -4,6 +4,7 @@ import urllib2
 import json
 import uuid
 import time
+import numpy as np
 
 
 GEOCODE_API_KEY = 'AIzaSyB8-2pmBoUrWCbzLwPkq9WyiEkeQCgPvlA'
@@ -13,7 +14,6 @@ cwd = os.getcwd()
 data_dir = cwd + os.sep + '..' + os.sep + 'data'
 meter_data = pd.read_csv(data_dir + os.sep + 'parking_meters.csv')
 zone_data = pd.read_csv(data_dir + os.sep + 'residential.csv')
-print 'hey'
 
 # take poorly formatted data and make it not dumpster tier
 def add_zone_data(df):
@@ -70,6 +70,25 @@ def geocode(address, api_key):
 	latlng = response['results'][0]['geometry']['location']
 	return (latlng['lat'], latlng['lng'])
 
+def create_availability_df():
+	columns = ['avalability_id', 'start_day', 'end_day', 'start_time', 'end_time', 'limit']
+	df = pd.DataFrame(columns=columns)
+	times = meter_data[['FROM DAY', 'TO DAY', 'FROM TIME', 'TO TIME', 'LIMIT HR', 'LIMIT MIN']]
+	times = times.drop_duplicates()
+	for row_num, row_data in times.iterrows():
+		if np.isnan(row_data['LIMIT MIN']):
+			limit = row_data['LIMIT HR']
+		else:
+			limit = row_data['LIMIT MIN'] / 60.0
+		data = [str(uuid.uuid4()), row_data['FROM DAY'], row_data['TO DAY'], \
+					row_data['FROM TIME'], row_data['TO TIME'], limit]
+		series = pd.Series(data, columns)
+		df = df.append(series, ignore_index=True)
+	return df
+
+#x = meter_data[['BLOCK/LIMITS', 'STREET']]
+#x.drop_duplicates()
+
 # id: the id of this line
 # blat: beginning latitude
 # blon: beginning longitude
@@ -82,8 +101,24 @@ def geocode(address, api_key):
 # rate: if it's a meter type, the cost/Hr in dollars
 # availability_id: the id that maps to a different table containing time availability info.
 # num_meters: the number of meters on this line (this might not work lmao)
-columns = ['id', 'blat', 'blon', 'elat', 'elon', 'sides', 'address', 'type', 'rate', 'num_meters']
-df = pd.DataFrame(columns=columns)
+#columns = ['id', 'blat', 'blon', 'elat', 'elon', 'sides', 'address', 'type', 'rate', 'num_meters', 'num_safe', 'num_towed']
+#df = pd.DataFrame(columns=columns)
 
-add_zone_data(df)
+#add_zone_data(df)
+
+availability_df = create_availability_df()
+availability_df.to_csv('availability_data.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
