@@ -65,10 +65,24 @@ function initMap() {
 
 function generateContent(content) {
   console.log(content);
+  var side;
+  if (content.sides == 'B') {
+    side = 'BOTH';
+  } else if (content.sides == 'N') {
+    side = 'NORTH';
+  } else if (content.sides == 'S') {
+    side = 'SOUTH';
+  } else if (content.sides == 'E') {
+    side = 'EAST';
+  } else if (content.sides == 'W') {
+    side = 'WEST';
+  } else {
+    side = content.sides;
+  }
   var contentString = '<h1>Parking Info</h1>'
-  + '<br><b>Parkable Sides:</b> ' + content.sides
+  + '<br><b>Parkable Sides:</b> ' + side
   + '<br><b>Address:</b> ' + content.address
-  + '<br><b>Type:</b> ' + content.type;
+  + '<br><b>Type:</b> ' + capitalizeFirstLetter(content.type)
 
   /*for (index = 0, len = content.availabilities.length; index < len; ++index) {
     var avail = content.availabilities[index];
@@ -115,6 +129,10 @@ function addCircle(latitude, long, color, map) {
           });
 }
 
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 function addLine(lat1, lng1, lat2, lng2, map, contentStuff, color) {
   var line = new google.maps.Polyline({
     path: [ {lat: lat1, lng: lng1},
@@ -124,7 +142,7 @@ function addLine(lat1, lng1, lat2, lng2, map, contentStuff, color) {
     geodesic: true,
     strokeColor: color,
     strokeOpacity: 0.4,
-    strokeWeight: 4
+    strokeWeight: 3
   });
 
   var infowindow = new google.maps.InfoWindow({
