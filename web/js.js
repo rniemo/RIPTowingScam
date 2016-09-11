@@ -41,9 +41,12 @@ function initMap() {
 
   console.log(testData);
 
-  for (index = 0, len = testData.lines.length; index < len; ++index) {
-    addLine(testData.lines[index].blat, testData.lines[index].blon, testData.lines[index].elat, 
-      testData.lines[index].elon, map, testData.lines[index]);
+  for (index = 0, len = testData.meter_lines.length; index < len; ++index) {
+    addLine(testData.meter_lines[index].blat, testData.meter_lines[index].blon, testData.meter_lines[index].elat, testData.meter_lines[index].elon, map, testData.meter_lines[index], '#00b200');
+  }
+
+  for (index = 0, len = testData.zone_lines.length; index < len; ++index) {
+    addLine(testData.zone_lines[index].blat, testData.zone_lines[index].blon, testData.zone_lines[index].elat, testData.zone_lines[index].elon, map, testData.zone_lines[index], '#0000FF');
   }
 
   for (index = 0, len = violationData.length; index < len; ++index) {
@@ -112,15 +115,15 @@ function addCircle(latitude, long, color, map) {
           });
 }
 
-function addLine(lat1, lng1, lat2, lng2, map, contentStuff) {
+function addLine(lat1, lng1, lat2, lng2, map, contentStuff, color) {
   var line = new google.maps.Polyline({
     path: [ {lat: lat1, lng: lng1},
       {lat: lat2, lng: lng2}
     ],
     map: map,
     geodesic: true,
-    strokeColor: '#00b200',
-    strokeOpacity: 1.0,
+    strokeColor: color,
+    strokeOpacity: 0.5,
     strokeWeight: 2
   });
 
