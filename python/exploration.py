@@ -170,6 +170,22 @@ def create_availability_meter_table():
 					df = df.append(series, ignore_index = True)
 	df.to_csv('availability_map.csv')
 
+def create_line_json():
+	result = []
+	filenames = ['meter_line_data.csv']
+	for filename in filenames:
+		lines = pd.read_csv(data_dir + os.sep + filename)
+		for row_num, line in lines.iterrows():
+			dic = {'id': line['id'], 'blat': line['blat'], 'blon': line['blon'], 'elat': line['elat'], \
+				'elon': line['elon'], 'sides': line['sides'], 'address': line['address'], \
+				'type': line['type'], 'rate': line['rate'], 'num_meters': line['num_meters']}
+			result.append(dic)
+	print json.dumps(result)
+
+create_line_json()
+
+
+
 # id: the id of this line
 # blat: beginning latitude
 # blon: beginning longitude
