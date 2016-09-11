@@ -4,10 +4,11 @@ import urllib2
 import json
 import uuid
 import time
+import random
 import numpy as np
 
 
-GEOCODE_API_KEY = 'AIzaSyB8-2pmBoUrWCbzLwPkq9WyiEkeQCgPvlA'
+GEOCODE_API_KEY = 'AIzaSyCDLLv7B3zkbayizbk7pNp8m2eDbDDEJpA'
 GEOCODE_API_KEY_2= 'AIzaSyAF-qWnBRw51IkQewmXpPg3BtfvDfeyUbU'
 URL = 'https://maps.googleapis.com/maps/api/geocode/json?'
 cwd = os.getcwd()
@@ -46,7 +47,7 @@ def add_zone_data(df):
 		# returns the side you can park on, N/E/S/W or B for both sides
 		side = row_data['Side'][0]
 		# form array of data
-		data = [str(uuid.uuid4()), line[0][0], line[0][1], line[1][0], line[1][1], side, address, 'zone', None, None]
+		data = [str(uuid.uuid4()), line[0][0], line[0][1], line[1][0], line[1][1], side, address, 'zone', None, None, None, None]
 		# append the data to the dataframe
 		series = pd.Series(data, columns)
 		df = df.append(series, ignore_index=True)
@@ -55,20 +56,71 @@ def add_zone_data(df):
 			api_key = GEOCODE_API_KEY_2
 	df.to_csv('line_data.csv')
 
+def add_meter_data(df):
+	#x = meter_data[['BLOCK/LIMITS', 'STREET']]
+#x.drop_duplicates()
+	meter_data.drop_duplicates(inplace=True)
+	meter_streets = meter_data[['BLOCK/LIMITS', 'STREET', 'SIDE']]
+	meter_streets = meter_streets.drop_duplicates()
+
+	unique_meters = meter_data.drop_duplicates(subset='METER NUMBER')
+	grouped = unique_meters.groupby(['BLOCK/LIMITS', 'STREET'])
+	num_meter_table = grouped.count()
+	geocoded = {}
+	i = 0
+	# f['METER NUMBER']['*blocklimits*']['*street*']
+	for row_num, row_data in meter_streets.iterrows():
+		# if we aren't looking at an address, skip that
+		if not row_data['BLOCK/LIMITS'].isdigit():
+			continue
+		# round block to nearest 100
+		block = int(round(float(row_data['BLOCK/LIMITS']), -2))
+		street = row_data['STREET'] + ' Philadelphia, PA'
+		address = '%d %s' % (block, street)
+		end_address = '%d %s' % (block + 100, street)
+		# thanks, obama
+		address = address.replace('\n', ' ')
+		end_address = end_address.replace('\n', ' ')
+		address = address.replace(' ', '+')
+		end_address = end_address.replace(' ', '+')
+		if address not in geocoded:
+			start_latlng = geocode(address, GEOCODE_API_KEY)
+			end_latlng = geocode(end_address, GEOCODE_API_KEY)
+			geocoded[address] = (start_latlng, end_latlng)
+		line = geocoded[address]
+		if None in line:
+			continue
+		# returns the side you can park on, N/E/S/W or B for both sides
+		side = row_data['SIDE'][0]
+		rate_row = meter_data[np.logical_and(meter_data['SIDE'] == row_data['SIDE'], \
+				np.logical_and(meter_data['BLOCK/LIMITS'] == row_data['BLOCK/LIMITS'], \
+					meter_data['STREET'] == row_data['STREET']))].head(1)
+		
+		rate = float(rate_row['RATE'].values[0][1:])
+		num_meters = num_meter_table['METER NUMBER'][row_data['BLOCK/LIMITS']][row_data['STREET']]
+		# form array of data
+		data = [str(uuid.uuid4()), line[0][0], line[0][1], line[1][0], line[1][1], side, address, 'meter', rate, num_meters, None, None]
+		# append the data to the dataframe
+		series = pd.Series(data, columns)
+		df = df.append(series, ignore_index=True)
+	df.to_csv('temp.csv')
+
 def geocode(address, api_key):
+	#return (.5, .5)
 	request = '%saddress=%s&key=%s' %(URL, address, api_key)
-	print request
 	try:
 		response = urllib2.urlopen(request).read()
 	except:
-		print response
 		return None
-
-	# can only call server 50 times / s, so this'll guarantee we're under that
-	time.sleep(.02)
-	response = json.loads(response)
-	latlng = response['results'][0]['geometry']['location']
-	return (latlng['lat'], latlng['lng'])
+	try:
+		# can only call server 50 times / s, so this'll guarantee we're under that
+		time.sleep(.02)
+		response = json.loads(response)
+		latlng = response['results'][0]['geometry']['location']
+		return (latlng['lat'], latlng['lng'])
+	except:
+		print request
+	return None
 
 def create_availability_df():
 	columns = ['avalability_id', 'start_day', 'end_day', 'start_time', 'end_time', 'limit']
@@ -86,8 +138,7 @@ def create_availability_df():
 		df = df.append(series, ignore_index=True)
 	return df
 
-#x = meter_data[['BLOCK/LIMITS', 'STREET']]
-#x.drop_duplicates()
+
 
 # id: the id of this line
 # blat: beginning latitude
@@ -101,13 +152,16 @@ def create_availability_df():
 # rate: if it's a meter type, the cost/Hr in dollars
 # availability_id: the id that maps to a different table containing time availability info.
 # num_meters: the number of meters on this line (this might not work lmao)
-#columns = ['id', 'blat', 'blon', 'elat', 'elon', 'sides', 'address', 'type', 'rate', 'num_meters', 'num_safe', 'num_towed']
-#df = pd.DataFrame(columns=columns)
+columns = ['id', 'blat', 'blon', 'elat', 'elon', 'sides', 'address', 'type', 'rate', 'num_meters', 'num_safe', 'num_towed']
+df = pd.DataFrame(columns=columns)
+
+add_meter_data(df)
+
 
 #add_zone_data(df)
 
-availability_df = create_availability_df()
-availability_df.to_csv('availability_data.csv')
+#availability_df = create_availability_df()
+#availability_df.to_csv('availability_data.csv')
 
 
 
